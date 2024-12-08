@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายได้รายเดือน</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div style="width: 80%; margin: 20px auto; text-align: center;">
+        <h1>สร้างกราฟรายได้รายเดือน</h1>
+        <form id="incomeForm">
+            <div id="inputFields">
+                <div>
+                    <label for="month1">ชื่อเดือน:</label>
+                    <input type="text" id="month1" placeholder="มกราคม">
+                    <label for="income1">รายได้:</label>
+                    <input type="number" id="income1" placeholder="10000"><br><br>
+                </div>
+            </div>
+            <button type="button" onclick="addField()">เพิ่มเดือน</button><br><br>
+            <button type="button" onclick="createChart()">สร้างกราฟ</button>
+        </form>
+
+        <div style="margin-top: 20px;">
+            <canvas id="incomeChart"></canvas>
+        </div>
+
+        <div id="profitAnalysis" style="margin-top: 20px; font-size: 1.2em; color: #333;"></div>
+    </div>
+
+    <script>
+        let fieldCount = 1; // ตัวนับช่องกรอกข้อมูล
+        let incomeChart;
+
+        function addField() {
+            fieldCount++;
+            const inputFields = document.getElementById('inputFields');
+            const newField = document.createElement('div');
+            newField.innerHTML = `
+                <label for="month${fieldCount}">ชื่อเดือน:</label>
+                <input type="text" id="month${fieldCount}" placeholder="เช่น กุมภาพันธ์">
+                <label for="income${fieldCount}">รายได้:</label>
+                <input type="number" id="income${fieldCount}" placeholder="เช่น 15000"><br><br>
+            `;
+            inputFields.appendChild(newField);
+        }
+
+        function getRandomColor() {
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            return `rgba(${r}, ${g}, ${b}, 0.6)`; // สีสุ่มพร้อมค่าความโปร่งใส
+        }
+
+        function createChart() {
+            const labels = [];
+            const data = [];
+            const backgroundColors = [];
+
+            // ดึงค่าจากช่องกรอกข้อมูล
+            for (let i = 1; i <= fieldCount; i++) {
+                const month = document.getElementById(`month${i}`).value.trim();
+                const income = parseFloat(document.getElementById(`income${i}`).value) || 0;
+
+                if (month) {
+                    labels.push(month);
+                    data.push(income);
+                    backgroundColors.push(getRandomColor());
+                }
+            }
+
+            // ตรวจสอบว่าเคยสร้างกราฟแล้วหรือยัง
+            if (incomeChart) {
+                incomeChart.destroy(); // ลบกราฟเก่าก่อนสร้างใหม่
+            }
+
+            const ctx = document.getElementById('incomeChart').getContext('2d');
+            incomeChart = new Chart(ctx, {
+                type: 'bar', // ชนิดของกราฟ
+                data: {
+                    labels: labels, // ชื่อเดือนที่กรอก
+                    datasets: [{
+                        label: 'รายได้ (บาท)',
+                        data: data, // ข้อมูลรายได้
+                        backgroundColor: backgroundColors, // ใช้สีสุ่มที่สร้าง
+                        borderColor: backgroundColors.map(color => color.replace('0.6', '1')), // สีเส้นขอบเข้มขึ้น
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // คำนวณกำไรลดลง
+            calculateProfitReduction(data);
+        }
+
+        function calculateProfitReduction(data) {
+            if (data.length === 0) return; // หากไม่มีข้อมูล ให้หยุดการคำนวณ
+
+            const maxIncome = Math.max(...data); // รายได้สูงสุด
+            const minIncome = Math.min(...data); // รายได้ต่ำสุด
+
+            let reductionPercentage = ((maxIncome - minIncome) / maxIncome) * 100;
+            reductionPercentage = reductionPercentage.toFixed(2); // ปัดเศษทศนิยม 2 ตำแหน่ง
+
+            const analysisDiv = document.getElementById('profitAnalysis');
+            analysisDiv.innerHTML = `
+                <strong>รายได้สูงสุด:</strong> ${maxIncome.toLocaleString()} บาท<br>
+                <strong>รายได้ต่ำสุด:</strong> ${minIncome.toLocaleString()} บาท<br>
+                <strong>กำไรลดลง:</strong> ${reductionPercentage}% 
+            `;
+        }
+    </script>
+</body>
+</html>
